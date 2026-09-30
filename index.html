@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Antariksa: Sejarah Islam Nusantara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(circle at bottom, #1b2735 0%, #090a0f 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2, h3, .space-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Animasi Bintang Latar Belakang */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle infinite linear;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Flashcard Styles */
+        .scene {
+            perspective: 1000px;
+            width: 100%;
+            height: 300px;
+            margin: 20px auto;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card__face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .card__face--front {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .card__face--back {
+            background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* Tombol Navigasi */
+        .nav-btn {
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        /* Animasi Transisi Halaman */
+        .page-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .page-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Matching Game Styles */
+        .match-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .match-item:hover {
+            transform: scale(1.05);
+            background: rgba(255,255,255,0.2);
+        }
+        .match-item.selected {
+            border-color: #00ffff;
+            background: rgba(0, 255, 255, 0.2);
+        }
+        .match-item.matched {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: #00ff00;
+            cursor: default;
+        }
+        .match-item.wrong {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #ff0000;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* Mini Game Canvas */
+        #gameCanvas {
+            background: #000;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+            max-width: 100%;
+        }
+
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white">
+
+    <div class="stars" id="starsContainer"></div>
+
+    <!-- Navigation Header -->
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b-0 rounded-none rounded-b-2xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-rocket text-purple-400 text-2xl"></i>
+                    <span class="space-font text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Jejak Islam</span>
+                </div>
+                <!-- Menu (Desktop) -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <button onclick="navigateTo('home')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10">Beranda</button>
+                        <button onclick="navigateTo('materi')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10">Materi</button>
+                        <button onclick="navigateTo('latihan')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10">Latihan</button>
+                        <button onclick="navigateTo('kuis')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-white/10">Kuis</button>
+                        <button onclick="navigateTo('game')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white">Main Game!</button>
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden glass-panel absolute w-full left-0 top-16" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="navigateTo('home'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">Beranda</button>
+                <button onclick="navigateTo('materi'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">Materi</button>
+                <button onclick="navigateTo('latihan'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">Latihan</button>
+                <button onclick="navigateTo('kuis'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-white/10">Kuis</button>
+                <button onclick="navigateTo('game'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-cyan-400">Main Game!</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+
+        <section id="home" class="page-content active text-center">
+            <div class="glass-panel p-8 md:p-12 mt-10 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 text-9xl opacity-10"><i class="fa-solid fa-moon"></i></div>
+                <h1 class="text-4xl md:text-6xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 space-font">Misi Penjelajahan Sejarah</h1>
+                <p class="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                    Selamat datang, Kapten! Hari ini kita akan melakukan perjalanan melintasi waktu dan ruang untuk mempelajari bagaimana Islam masuk ke Nusantara. Siapkan pesawatmu!
+                </p>
+                <button onclick="navigateTo('materi')" class="nav-btn bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-8 rounded-full text-lg shadow-[0_0_15px_rgba(0,255,255,0.5)]">
+                    Mulai Penjelajahan <i class="fa-solid fa-paper-plane ml-2"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="materi" class="page-content">
+            <div class="glass-panel p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-center mb-6 text-cyan-400 space-font"><i class="fa-solid fa-book-open-reader mr-2"></i> Pusat Data: Masuknya Islam</h2>
+                
+                <div class="max-w-none text-gray-300">
+                    <p class="text-lg text-center mb-8">Agama Islam masuk ke wilayah Nusantara (Indonesia) dibawa oleh para pedagang, ulama, dan mubaligh. Proses ini berlangsung secara damai, berangsur-angsur, dan melalui berbagai jalur.</p>
+                    
+                    <h3 class="text-2xl font-bold text-purple-400 mb-4 space-font border-b border-purple-500/30 pb-2">Jalur Penyebaran Islam</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        <div class="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-cyan-400/50 transition">
+                            <h4 class="text-xl font-bold text-cyan-300 mb-2"><i class="fa-solid fa-ship w-6"></i> Perdagangan</h4>
+                            <p class="text-sm">Merupakan jalur utama dan tahap awal. Pedagang Muslim dari Arab, Persia, dan Gujarat berlabuh di bandar-bandar Nusantara dan berinteraksi dengan penduduk lokal.</p>
+                        </div>
+                        <div class="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-pink-400/50 transition">
+                            <h4 class="text-xl font-bold text-pink-300 mb-2"><i class="fa-solid fa-ring w-6"></i> Perkawinan</h4>
+                            <p class="text-sm">Pedagang Muslim yang menetap kemudian menikah dengan wanita pribumi, termasuk putri bangsawan, yang mempercepat penyebaran Islam dari atas ke bawah.</p>
+                        </div>
+                        <div class="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-green-400/50 transition">
+                            <h4 class="text-xl font-bold text-green-300 mb-2"><i class="fa-solid fa-book w-6"></i> Pendidikan</h4>
+                            <p class="text-sm">Penyebaran dilakukan melalui pondok pesantren yang didirikan oleh para ulama dan kiai untuk mendidik santri yang nantinya menyebarkan Islam kembali ke daerah asalnya.</p>
+                        </div>
+                        <div class="bg-black/30 p-4 rounded-lg border border-white/5 hover:border-yellow-400/50 transition">
+                            <h4 class="text-xl font-bold text-yellow-300 mb-2"><i class="fa-solid fa-masks-theater w-6"></i> Kesenian</h4>
+                            <p class="text-sm">Melalui pertunjukan budaya seperti wayang (oleh Sunan Kalijaga), sastra, dan gamelan yang telah disisipi ajaran dan nilai-nilai Islam agar mudah diterima rakyat.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-purple-900/50 to-blue-900/50 p-6 rounded-xl border border-purple-500/30 mb-8">
+                        <h3 class="text-xl font-bold text-white mb-2 space-font"><i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i> Teori Masuknya Islam</h3>
+                        <p class="text-sm mb-0">Secara historis, terdapat 4 teori utama mengenai asal kedatangan Islam ke Nusantara: <strong>Teori Gujarat (India), Teori Mekkah (Arab), Teori Persia (Iran), dan Teori Cina</strong>. Kapten, mari kita pelajari detail teori ini lebih lanjut di ruang latihan!</p>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button onclick="navigateTo('latihan')" class="nav-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+                        Masuk ke Ruang Latihan <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="latihan" class="page-content">
+            <div class="glass-panel p-6 mb-8">
+                <h2 class="text-3xl font-bold text-center mb-6 text-pink-400 space-font"><i class="fa-solid fa-satellite-dish mr-2"></i> Ruang Simulasi & Latihan</h2>
+                
+                <!-- Flashcard (Dipindah ke sini) -->
+                <div class="mb-10 bg-black/30 p-5 rounded-xl border border-white/10">
+                    <h3 class="text-xl font-bold mb-2 text-cyan-300">Tahap 1: Arsip Teori Sejarah (Flashcard)</h3>
+                    <p class="text-gray-300 text-sm mb-4">Pelajari keempat teori masuknya Islam. Klik pada kartu untuk mengungkap penjelasan di baliknya!</p>
+
+                    <!-- Flashcard Navigation -->
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="prevCard()" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"><i class="fa-solid fa-chevron-left text-xl"></i></button>
+                        <span id="cardCounter" class="font-bold text-purple-300">1 / 4</span>
+                        <button onclick="nextCard()" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"><i class="fa-solid fa-chevron-right text-xl"></i></button>
+                    </div>
+
+                    <!-- Flashcard Container -->
+                    <div class="scene">
+                        <div class="card" id="flashcard" onclick="flipCard()">
+                            <div class="card__face card__face--front">
+                                <h3 id="cardTitle" class="text-2xl font-bold mb-4 space-font">Teori Gujarat</h3>
+                                <i id="cardIcon" class="fa-solid fa-ship text-5xl mb-4 opacity-80"></i>
+                                <p class="text-sm opacity-75">(Klik untuk melihat rahasia di balik teori ini)</p>
+                            </div>
+                            <div class="card__face card__face--back">
+                                <h3 class="text-xl font-bold mb-2">Penjelasan:</h3>
+                                <p id="cardDesc" class="text-sm md:text-base leading-relaxed">
+                                    Menurut teori ini, Islam masuk ke Indonesia dibawa oleh para pedagang dari Gujarat (India) pada abad ke-13 Masehi. Bukti utamanya adalah corak nisan Sultan Malik al-Saleh di Samudra Pasai yang mirip dengan nisan di Gujarat.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benar/Salah -->
+                <div class="mb-10 bg-black/30 p-5 rounded-xl border border-white/10">
+                    <h3 class="text-xl font-bold mb-4 text-cyan-300">Tahap 2: Sensor Benar/Salah</h3>
+                    <p class="text-gray-300 text-sm mb-4">Analisis pernyataan berikut. Apakah data ini Valid (Benar) atau Eror (Salah)?</p>
+                    
+                    <div class="bg-blue-900/40 p-6 rounded-lg border border-blue-500/30 text-center">
+                        <p id="tfQuestion" class="text-lg md:text-xl font-bold mb-6 text-white">Pertanyaan akan muncul di sini.</p>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="checkTF(true)" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded shadow-[0_0_10px_rgba(0,255,0,0.3)] transition transform hover:scale-105"><i class="fa-solid fa-check mr-2"></i>Valid</button>
+                            <button onclick="checkTF(false)" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-8 rounded shadow-[0_0_10px_rgba(255,0,0,0.3)] transition transform hover:scale-105"><i class="fa-solid fa-xmark mr-2"></i>Eror</button>
+                        </div>
+                        <p id="tfFeedback" class="mt-4 hidden font-bold text-lg"></p>
+                    </div>
+                </div>
+
+                <!-- Menjodohkan -->
+                <div class="bg-black/30 p-5 rounded-xl border border-white/10">
+                    <h3 class="text-xl font-bold mb-2 text-cyan-300">Tahap 3: Sinkronisasi Data (Menjodohkan)</h3>
+                    <p class="text-gray-300 text-sm mb-4">Klik pada kartu di sisi kiri (Teori/Konsep), lalu klik pasangannya di sisi kanan (Bukti/Keterangan).</p>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div id="matchLeft" class="space-y-3">
+                            <!-- Left items -->
+                        </div>
+                        <div id="matchRight" class="space-y-3">
+                            <!-- Right items -->
+                        </div>
+                    </div>
+                    <p id="matchFeedback" class="mt-4 hidden"></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="kuis" class="page-content">
+            <div class="glass-panel p-6">
+                <h2 class="text-3xl font-bold text-center mb-6 text-yellow-400 space-font"><i class="fa-solid fa-meteor mr-2"></i> Ujian Komando (Kuis)</h2>
+                
+                <div id="quizContainer" class="bg-black/30 p-6 rounded-xl border border-white/10 relative min-h-[300px]">
+                    <div id="quizScore" class="absolute top-4 right-4 font-bold text-purple-400">Skor: 0</div>
+                    <div id="quizProgress" class="text-sm text-gray-400 mb-2">Pertanyaan 1 dari 5</div>
+                    
+                    <h3 id="quizQuestion" class="text-xl font-bold mb-6 mt-4">Pertanyaan akan muncul di sini...</h3>
+                    
+                    <div id="quizOptions" class="space-y-3">
+                        <!-- Opsi akan diisi oleh JS -->
+                    </div>
+
+                    <div id="quizEndScreen" class="hidden text-center py-8">
+                        <h3 class="text-3xl font-bold mb-2 text-cyan-400 space-font">Misi Selesai!</h3>
+                        <p class="text-xl mb-4">Skor Akhir Anda:</p>
+                        <div id="finalScore" class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-6 space-font">100</div>
+                        <p id="scoreMessage" class="mb-6 text-gray-300">Luar biasa! Pengetahuan sejarahmu sekelas Astronot Senior!</p>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="initQuiz()" class="bg-purple-600 hover:bg-purple-700 py-2 px-4 rounded-lg"><i class="fa-solid fa-rotate-right mr-2"></i>Ulangi</button>
+                            <button onclick="navigateTo('game')" class="bg-gradient-to-r from-pink-500 to-orange-400 py-2 px-4 rounded-lg font-bold">Waktunya Main Game!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="game" class="page-content">
+            <div class="glass-panel p-6 text-center">
+                <h2 class="text-3xl font-bold mb-2 text-cyan-400 space-font"><i class="fa-solid fa-gamepad mr-2"></i> Tangkap Bintang Hijaiyah</h2>
+                <p class="text-gray-300 mb-4 text-sm">Gerakkan pesawat dengan mouse atau sentuh layar. Tangkap bintang berwarna untuk poin! Hindari asteroid merah.</p>
+                
+                <div class="flex justify-between items-center mb-2 px-4">
+                    <span id="gameScore" class="font-bold text-xl text-yellow-400">Skor: 0</span>
+                    <span id="gameLives" class="font-bold text-xl text-red-400"><i class="fa-solid fa-heart"></i> <i class="fa-solid fa-heart"></i> <i class="fa-solid fa-heart"></i></span>
+                </div>
+
+                <div class="relative w-full flex justify-center">
+                    <canvas id="gameCanvas" width="400" height="500"></canvas>
+                    
+                    <!-- Game Over Overlay -->
+                    <div id="gameOverScreen" class="absolute top-0 left-0 w-full h-full bg-black/80 rounded-[10px] hidden flex-col items-center justify-center">
+                        <h3 class="text-3xl font-bold text-red-500 mb-2 space-font">KAPAL RUSAK!</h3>
+                        <p class="text-xl mb-4">Skor: <span id="finalGameScore" class="text-yellow-400 font-bold">0</span></p>
+                        <button onclick="startGame()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-full border-2 border-cyan-400 shadow-[0_0_10px_cyan]">
+                            <i class="fa-solid fa-play mr-2"></i> Main Lagi
+                        </button>
+                    </div>
+                    
+                    <!-- Start Overlay -->
+                    <div id="gameStartScreen" class="absolute top-0 left-0 w-full h-full bg-black/60 rounded-[10px] flex flex-col items-center justify-center">
+                        <button onclick="startGame()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full border-2 border-green-400 shadow-[0_0_15px_#22c55e] text-xl transform transition hover:scale-105">
+                            <i class="fa-solid fa-rocket mr-2"></i> MULAI GAME
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 1. SETUP UI & BACKGROUND ---
+        
+        let gameLoopId = null;
+
+        // Generate Stars for Background
+        function createStars() {
+            const container = document.getElementById('starsContainer');
+            const numStars = 100;
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = `${Math.random() * 3}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.animationDuration = `${Math.random() * 3 + 1}s`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                container.appendChild(star);
+            }
+        }
+        createStars();
+
+        // Navigation Logic
+        function navigateTo(pageId) {
+            // Sembunyikan semua halaman
+            document.querySelectorAll('.page-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Tampilkan halaman yang dituju
+            document.getElementById(pageId).classList.add('active');
+            
+            // Hentikan game jika pindah halaman
+            if(pageId !== 'game' && gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+                document.getElementById('gameStartScreen').style.display = 'flex';
+                document.getElementById('gameOverScreen').style.display = 'none';
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // --- 2. LOGIKA FLASHCARD ---
+        const flashcardsData = [
+            {
+                title: "Teori Gujarat",
+                icon: "fa-ship",
+                desc: "Islam masuk melalui pedagang Gujarat (India) abad ke-13. Bukti: Nisan Sultan Malik al-Saleh dari Samudra Pasai mirip dengan nisan di Gujarat."
+            },
+            {
+                title: "Teori Mekkah / Arab",
+                icon: "fa-kaaba",
+                desc: "Islam dibawa langsung oleh saudagar Arab pada abad ke-7 Masehi. Bukti: Adanya perkampungan pedagang Arab di pantai barat Sumatera (Barus)."
+            },
+            {
+                title: "Teori Persia",
+                icon: "fa-mosque",
+                desc: "Islam masuk dari Persia (Iran) abad ke-13. Bukti: Kesamaan tradisi, seperti peringatan 10 Muharram (Asyura) di Sumatra yang mirip tradisi Syiah di Persia."
+            },
+            {
+                title: "Teori Cina",
+                icon: "fa-yin-yang",
+                desc: "Islam masuk melalui pendatang Muslim dari Cina. Bukti: Catatan sejarah tentang pimpinan armada Tiongkok yang muslim (Laksamana Cheng Ho) dan arsitektur masjid kuno di Jawa."
+            }
+        ];
+        
+        let currentCardIndex = 0;
+
+        function updateFlashcard() {
+            const card = flashcardsData[currentCardIndex];
+            document.getElementById('cardTitle').innerText = card.title;
+            document.getElementById('cardIcon').className = `fa-solid ${card.icon} text-5xl mb-4 opacity-80`;
+            document.getElementById('cardDesc').innerText = card.desc;
+            document.getElementById('cardCounter').innerText = `${currentCardIndex + 1} / ${flashcardsData.length}`;
+            
+            // Reset flip state
+            const cardElement = document.getElementById('flashcard');
+            cardElement.classList.remove('is-flipped');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('is-flipped');
+        }
+
+        function nextCard() {
+            currentCardIndex = (currentCardIndex + 1) % flashcardsData.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentCardIndex = (currentCardIndex - 1 + flashcardsData.length) % flashcardsData.length;
+            updateFlashcard();
+        }
+
+        // Initialize first card
+        updateFlashcard();
+
+
+        // --- 3. LOGIKA LATIHAN (B/S & MENJODOHKAN) ---
+        // True/False
+        const tfData = [
+            { q: "Islam menyebar di Indonesia utamanya melalui jalur damai seperti perdagangan dan perkawinan.", a: true },
+            { q: "Kerajaan Samudra Pasai adalah kerajaan Hindu pertama di Nusantara.", a: false }, // Islamic
+            { q: "Walisongo memiliki peran besar dalam menyebarkan Islam di Pulau Jawa.", a: true }
+        ];
+        let currentTfIndex = 0;
+
+        function updateTF() {
+            document.getElementById('tfQuestion').innerText = tfData[currentTfIndex].q;
+            document.getElementById('tfFeedback').classList.add('hidden');
+        }
+
+        function checkTF(answer) {
+            const fb = document.getElementById('tfFeedback');
+            fb.classList.remove('hidden');
+            if (answer === tfData[currentTfIndex].a) {
+                fb.innerText = "Tepat Sekali! Sinyal Valid.";
+                fb.className = "mt-4 text-center font-bold text-lg text-green-400";
+                setTimeout(() => {
+                    currentTfIndex = (currentTfIndex + 1) % tfData.length;
+                    updateTF();
+                }, 1500);
+            } else {
+                fb.innerText = "Sinyal Eror! Coba pelajari lagi.";
+                fb.className = "mt-4 text-center font-bold text-lg text-red-400";
+            }
+        }
+        updateTF();
+
+        // Menjodohkan
+        const matchData = [
+            { id: 1, left: "Teori Gujarat", right: "Nisan Sultan Malik al-Saleh" },
+            { id: 2, left: "Teori Arab", right: "Kampung Barus Abad ke-7" },
+            { id: 3, left: "Teori Persia", right: "Tradisi 10 Muharram" },
+            { id: 4, left: "Penyebar Jawa", right: "Walisongo" }
+        ];
+
+        let selectedLeft = null;
+        let selectedRight = null;
+        let matchedCount = 0;
+
+        function initMatchingGame() {
+            const leftContainer = document.getElementById('matchLeft');
+            const rightContainer = document.getElementById('matchRight');
+            leftContainer.innerHTML = '';
+            rightContainer.innerHTML = '';
+            matchedCount = 0;
+            document.getElementById('matchFeedback').classList.add('hidden');
+
+            // Shuffle array helper
+            const shuffle = (array) => array.sort(() => Math.random() - 0.5);
+
+            const leftItems = shuffle([...matchData]);
+            const rightItems = shuffle([...matchData]);
+
+            leftItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'match-item glass-panel p-3 text-center text-sm md:text-base';
+                div.innerText = item.left;
+                div.dataset.id = item.id;
+                div.dataset.side = 'left';
+                div.onclick = () => handleMatchClick(div);
+                leftContainer.appendChild(div);
+            });
+
+            rightItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'match-item bg-gray-800 p-3 rounded-lg text-center text-sm md:text-base border border-gray-600';
+                div.innerText = item.right;
+                div.dataset.id = item.id;
+                div.dataset.side = 'right';
+                div.onclick = () => handleMatchClick(div);
+                rightContainer.appendChild(div);
+            });
+        }
+
+        function handleMatchClick(element) {
+            if (element.classList.contains('matched')) return;
+
+            const side = element.dataset.side;
+            
+            if (side === 'left') {
+                if (selectedLeft) selectedLeft.classList.remove('selected');
+                selectedLeft = element;
+                element.classList.add('selected');
+            } else {
+                if (selectedRight) selectedRight.classList.remove('selected');
+                selectedRight = element;
+                element.classList.add('selected');
+            }
+
+            checkMatch();
+        }
+
+        function checkMatch() {
+            if (selectedLeft && selectedRight) {
+                if (selectedLeft.dataset.id === selectedRight.dataset.id) {
+                    // Match found
+                    selectedLeft.classList.remove('selected');
+                    selectedRight.classList.remove('selected');
+                    selectedLeft.classList.add('matched');
+                    selectedRight.classList.add('matched');
+                    matchedCount++;
+                    selectedLeft = null;
+                    selectedRight = null;
+
+                    if (matchedCount === matchData.length) {
+                        const fb = document.getElementById('matchFeedback');
+                        fb.innerText = "Sinkronisasi Berhasil! Semua data terhubung.";
+                        fb.className = "mt-4 text-center font-bold text-xl text-green-400";
+                        fb.classList.remove('hidden');
+                        setTimeout(initMatchingGame, 3000); // Restart after 3s
+                    }
+                } else {
+                    // Wrong match
+                    const l = selectedLeft, r = selectedRight;
+                    l.classList.remove('selected');
+                    r.classList.remove('selected');
+                    l.classList.add('wrong');
+                    r.classList.add('wrong');
+                    
+                    setTimeout(() => {
+                        l.classList.remove('wrong');
+                        r.classList.remove('wrong');
+                    }, 500);
+                    selectedLeft = null;
+                    selectedRight = null;
+                }
+            }
+        }
+        initMatchingGame();
+
+
+        // --- 4. LOGIKA KUIS ---
+        const quizData = [
+            {
+                q: "Jalur masuknya Islam ke Indonesia yang paling dominan adalah melalui jalur...",
+                options: ["Peperangan", "Perdagangan", "Penjajahan", "Utusan resmi negara"],
+                answer: 1
+            },
+            {
+                q: "Siapakah yang membawa ajaran Islam menurut Teori Gujarat?",
+                options: ["Saudagar dari Arab langsung", "Pedagang dari India", "Walisongo", "Laksamana Cheng Ho"],
+                answer: 1
+            },
+            {
+                q: "Bukti sejarah masuknya Islam berdasarkan Teori Arab adalah ditemukannya...",
+                options: ["Perkampungan Barus di Sumatera", "Nisan Fatimah binti Maimun", "Keraton Cirebon", "Candi Borobudur"],
+                answer: 0
+            },
+            {
+                q: "Kerajaan Islam pertama di Indonesia adalah...",
+                options: ["Kerajaan Demak", "Kerajaan Mataram Islam", "Kerajaan Samudra Pasai", "Kerajaan Aceh"],
+                answer: 2
+            },
+            {
+                q: "Proses akulturasi (percampuran budaya) dalam penyebaran Islam di Jawa terlihat pada bangunan...",
+                options: ["Masjid Menara Kudus", "Gereja Katedral", "Vihara", "Gedung Sate"],
+                answer: 0
+            }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+
+        function initQuiz() {
+            currentQuizIndex = 0;
+            quizScore = 0;
+            document.getElementById('quizEndScreen').classList.add('hidden');
+            document.getElementById('quizOptions').classList.remove('hidden');
+            document.getElementById('quizQuestion').classList.remove('hidden');
+            document.getElementById('quizProgress').classList.remove('hidden');
+            updateQuizUI();
+        }
+
+        function updateQuizUI() {
+            const q = quizData[currentQuizIndex];
+            document.getElementById('quizScore').innerText = `Skor: ${quizScore * 20}`;
+            document.getElementById('quizProgress').innerText = `Pertanyaan ${currentQuizIndex + 1} dari ${quizData.length}`;
+            document.getElementById('quizQuestion').innerText = q.q;
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left bg-white/5 hover:bg-white/15 border border-white/20 p-4 rounded-lg transition duration-200';
+                btn.innerText = opt;
+                btn.onclick = () => answerQuiz(index);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function answerQuiz(selectedIndex) {
+            const correctIndex = quizData[currentQuizIndex].answer;
+            const btns = document.getElementById('quizOptions').children;
+            
+            // Disable buttons and show color
+            for(let i=0; i<btns.length; i++) {
+                btns[i].disabled = true;
+                if(i === correctIndex) {
+                    btns[i].classList.replace('bg-white/5', 'bg-green-600/80');
+                    btns[i].classList.add('border-green-400');
+                } else if(i === selectedIndex) {
+                    btns[i].classList.replace('bg-white/5', 'bg-red-600/80');
+                }
+            }
+
+            if (selectedIndex === correctIndex) {
+                quizScore++;
+            }
+
+            setTimeout(() => {
+                currentQuizIndex++;
+                if (currentQuizIndex < quizData.length) {
+                    updateQuizUI();
+                } else {
+                    showQuizResult();
+                }
+            }, 1000);
+        }
+
+        function showQuizResult() {
+            document.getElementById('quizOptions').classList.add('hidden');
+            document.getElementById('quizQuestion').classList.add('hidden');
+            document.getElementById('quizProgress').classList.add('hidden');
+            
+            const endScreen = document.getElementById('quizEndScreen');
+            endScreen.classList.remove('hidden');
+            
+            const final = quizScore * 20;
+            document.getElementById('finalScore').innerText = final;
+            
+            const msg = document.getElementById('scoreMessage');
+            if (final === 100) msg.innerText = "Luar biasa! Pengetahuan sejarahmu sekelas Astronot Senior!";
+            else if (final >= 60) msg.innerText = "Bagus! Kamu siap mengudara, tapi perlu cek manual navigasi lagi.";
+            else msg.innerText = "Peringatan! Kapal perlu perbaikan. Pelajari lagi arsip materi.";
+        }
+
+        initQuiz();
+
+
+        // --- 5. LOGIKA GAME CANVAS ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game variables
+        let player = { x: 200, y: 400, width: 40, height: 40, speed: 5 };
+        let stars = [];
+        let asteroids = [];
+        let score = 0;
+        let lives = 3;
+        let isGameOver = false;
+        let frameCount = 0;
+
+        // Player SVG Icon (Rocket)
+        const rocketSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path fill="#00ffff" d="M298.6 150.3L256 7.4 213.4 150.3c-29.3 9.4-53.5 28.5-68.5 53.6l-50.6 84.4c-9.1 15.2-13.9 32.5-13.9 50.3V448h251.5V338.6c0-17.8-4.8-35.1-13.9-50.3l-50.6-84.4c-15-25.1-39.2-44.2-68.5-53.6z"/>
+                <path fill="#f5af19" d="M208 448h96v48c0 8.8-7.2 16-16 16h-64c-8.8 0-16-7.2-16-16v-48z"/>
+            </svg>`;
+        const playerImage = new Image();
+        playerImage.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(rocketSVG);
+
+        // Control variables
+        let leftPressed = false;
+        let rightPressed = false;
+
+        // Event listeners for keyboard
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowLeft') leftPressed = true;
+            if(e.key === 'ArrowRight') rightPressed = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if(e.key === 'ArrowLeft') leftPressed = false;
+            if(e.key === 'ArrowRight') rightPressed = false;
+        });
+
+        // Event listeners for touch/mouse
+        function getCursorPosition(canvas, event) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+            if(clientX) {
+                const x = clientX - rect.left;
+                // Move player towards cursor x
+                player.x = x - player.width/2;
+                // Keep within bounds
+                if (player.x < 0) player.x = 0;
+                if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => getCursorPosition(canvas, e));
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            getCursorPosition(canvas, e);
+        }, {passive: false});
+
+        function spawnStar() {
+            const size = 20;
+            const x = Math.random() * (canvas.width - size);
+            stars.push({ x: x, y: 0, size: size, speed: Math.random() * 2 + 2, color: '#00ff00' });
+        }
+
+        function spawnAsteroid() {
+            const size = 30;
+            const x = Math.random() * (canvas.width - size);
+            asteroids.push({ x: x, y: 0, size: size, speed: Math.random() * 3 + 3 });
+        }
+
+        function drawPlayer() {
+            ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+        }
+
+        function drawCircle(obj, color) {
+            ctx.beginPath();
+            ctx.arc(obj.x + obj.size/2, obj.y + obj.size/2, obj.size/2, 0, Math.PI*2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawAsteroid(obj) {
+             ctx.beginPath();
+             ctx.moveTo(obj.x + obj.size*0.2, obj.y);
+             ctx.lineTo(obj.x + obj.size*0.8, obj.y + obj.size*0.2);
+             ctx.lineTo(obj.x + obj.size, obj.y + obj.size*0.7);
+             ctx.lineTo(obj.x + obj.size*0.6, obj.y + obj.size);
+             ctx.lineTo(obj.x + obj.size*0.1, obj.y + obj.size*0.8);
+             ctx.fillStyle = '#ff3333';
+             ctx.fill();
+             ctx.closePath();
+        }
+
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.size &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.size &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+
+        function updateGameUI() {
+            document.getElementById('gameScore').innerText = `Skor: ${score}`;
+            let heartHTML = '';
+            for(let i=0; i<lives; i++) heartHTML += '<i class="fa-solid fa-heart mr-1"></i>';
+            document.getElementById('gameLives').innerHTML = heartHTML;
+        }
+
+        function gameLoop() {
+            if (isGameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+
+            // Update Player Position (Keyboard)
+            if (leftPressed && player.x > 0) player.x -= player.speed;
+            if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+
+            drawPlayer();
+
+            // Spawn entities
+            if (frameCount % 60 === 0) spawnStar(); // Every ~1s
+            if (frameCount % 90 === 0) spawnAsteroid(); // Every ~1.5s
+
+            // Update & Draw Stars (Good)
+            for (let i = stars.length - 1; i >= 0; i--) {
+                const s = stars[i];
+                s.y += s.speed;
+                drawCircle(s, '#f5af19'); // Yellowish star
+
+                // Collision with player
+                if (checkCollision(player, s)) {
+                    score += 10;
+                    stars.splice(i, 1);
+                    updateGameUI();
+                } else if (s.y > canvas.height) {
+                    stars.splice(i, 1); // Remove off-screen
+                }
+            }
+
+            // Update & Draw Asteroids (Bad)
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                const a = asteroids[i];
+                a.y += a.speed;
+                drawAsteroid(a);
+
+                // Collision with player
+                if (checkCollision(player, a)) {
+                    lives -= 1;
+                    asteroids.splice(i, 1);
+                    updateGameUI();
+                    
+                    // Flash screen red
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    if (lives <= 0) {
+                        endGame();
+                    }
+                } else if (a.y > canvas.height) {
+                    asteroids.splice(i, 1);
+                }
+            }
+
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            document.getElementById('gameStartScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            // Reset variables
+            player.x = canvas.width/2 - player.width/2;
+            stars = [];
+            asteroids = [];
+            score = 0;
+            lives = 3;
+            frameCount = 0;
+            isGameOver = false;
+            
+            updateGameUI();
+            
+            // Wait for image to load before starting loop if not already
+            if(playerImage.complete) {
+                gameLoop();
+            } else {
+                playerImage.onload = () => gameLoop();
+            }
+        }
+
+        function endGame() {
+            isGameOver = true;
+            cancelAnimationFrame(gameLoopId);
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalGameScore').innerText = score;
+        }
+
+        // Initialize display to home on load
+        window.onload = () => {
+            navigateTo('home');
+        };
+
+    </script>
+</body>
+</html>
